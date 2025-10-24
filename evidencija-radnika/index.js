@@ -2,23 +2,39 @@ const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 const QRCode = require('qrcode');
-const cron = require('node-cron');
 require('dotenv').config();
 
 const app = express();
 
-// CORS konfiguracija - OVO JE KLJUČNO!
-app.use(cors({
-  origin: [
+console.log('🚀 Backend starting with CORS enabled...');
+
+// CORS middleware - OVAJ ĆE RADITI SIGURNO
+app.use((req, res, next) => {
+  const allowedOrigins = [
+    'https://evidencija-radnika.vercel.app',
+    'https://evidencija-frontend.vercel.app', 
     'http://localhost:5173',
-    'http://localhost:3000',
-    'https://evidencija-frontend.vercel.app',
-    'https://*.vercel.app'
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
-}));
+    'http://localhost:3000'
+  ];
+  
+  const origin = req.headers.origin;
+  
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    console.log('🛫 Preflight request handled for:', origin);
+    return res.status(200).end();
+  }
+  
+  next();
+});
 
 app.use(express.json());
 
@@ -38,19 +54,16 @@ const generateQRCode = async () => {
     const now = new Date();
     let vazeci_do;
 
-    // Odredi do kada vaši QR kod na osnovu trenutnog vremena
     const hoursInSerbia = now.toLocaleString('sr-RS', { timeZone: 'Europe/Belgrade', hour: '2-digit' });
     const currentHour = parseInt(hoursInSerbia);
 
     console.log(`🕐 Trenutno vreme u Srbiji: ${currentHour}:00`);
 
     if (currentHour < 15) {
-      // Ako je pre 15:00, generiši jutarnji kod (važi do 15:00)
       vazeci_do = new Date(now);
       vazeci_do.setHours(15, 0, 0, 0);
       console.log('🕗 Generisan JUTRANJI QR kod - važi do 15:00');
     } else {
-      // Ako je posle 15:00, generiši popodnevni kod (važi do 08:00 sledećeg dana)
       vazeci_do = new Date(now);
       vazeci_do.setDate(vazeci_do.getDate() + 1);
       vazeci_do.setHours(8, 0, 0, 0);
@@ -69,9 +82,7 @@ const generateQRCode = async () => {
     if (error) throw error;
 
     console.log('🎯 Novi QR kod generisan:', kod);
-    console.log('⏰ Važi do:', new Date(vazeci_do).toLocaleString('sr-RS'));
     
-    // Generiši QR sliku
     const qr_image = await QRCode.toDataURL(kod, { width: 400, margin: 2 });
     
     return {
@@ -265,7 +276,6 @@ app.get('/current-qr', async (req, res) => {
   try {
     console.log('🔍 Tražim aktivan QR kod...');
     
-    // Prvo proveri da li postoji aktivan QR kod
     let { data: activeQr, error } = await supabase
       .from('qr_codes')
       .select('*')
@@ -274,15 +284,11 @@ app.get('/current-qr', async (req, res) => {
       .limit(1)
       .single();
 
-    // Ako NEMA aktivnog QR koda, GENERIŠI NOVI
     if (!activeQr) {
       console.log('🔄 Nema aktivnog QR koda - generišem novi...');
       activeQr = await generateQRCode();
     } else {
       console.log('✅ Koristim postojeći QR kod');
-      console.log('⏰ Važi do:', new Date(activeQr.vazeci_do).toLocaleString('sr-RS'));
-      
-      // Generiši QR sliku za postojeći kod
       const qr_image = await QRCode.toDataURL(activeQr.kod, { width: 400, margin: 2 });
       activeQr.qr_image = qr_image;
     }
@@ -358,7 +364,6 @@ app.post('/check-out', async (req, res) => {
   try {
     const { user_id } = req.body;
     
-    // Pronađi aktivan dolazak
     const { data: activeAttendance, error: findError } = await supabase
       .from('dolasci')
       .select('*')
@@ -376,11 +381,9 @@ app.post('/check-out', async (req, res) => {
     }
 
     const timestamp_odlaska = new Date().toISOString();
-    
-    // Izračunaj ukupno vreme
     const dolazak = new Date(activeAttendance.timestamp_dolaska);
     const odlazak = new Date(timestamp_odlaska);
-    const ukupno_vreme = (odlazak - dolazak) / (1000 * 60 * 60); // u satima
+    const ukupno_vreme = (odlazak - dolazak) / (1000 * 60 * 60);
 
     const { data, error } = await supabase
       .from('dolasci')
@@ -408,7 +411,6 @@ app.post('/start-break', async (req, res) => {
   try {
     const { user_id } = req.body;
     
-    // Pronađi aktivan dolazak
     const { data: activeAttendance, error: findError } = await supabase
       .from('dolasci')
       .select('*')
@@ -449,7 +451,6 @@ app.post('/end-break', async (req, res) => {
   try {
     const { user_id } = req.body;
     
-    // Pronađi aktivan dolazak
     const { data: activeAttendance, error: findError } = await supabase
       .from('dolasci')
       .select('*')
@@ -466,7 +467,6 @@ app.post('/end-break', async (req, res) => {
       });
     }
 
-    // Pronađi aktivnu pauzu
     const { data: activeBreak, error: breakError } = await supabase
       .from('pauze')
       .select('*')
@@ -527,7 +527,6 @@ app.get('/attendance-history/:user_id?', async (req, res) => {
 
     if (error) throw error;
 
-    // Dodaj izračunate podatke
     const historyWithCalculations = data.map(record => {
       let ukupno_pauza_sati = 0;
       
@@ -655,21 +654,18 @@ app.put('/vacation-request/:id', async (req, res) => {
 // STATISTIKE ZA ADMIN PANEL
 app.get('/admin/statistics', async (req, res) => {
   try {
-    // Ukupno korisnika
     const { data: users, error: usersError } = await supabase
       .from('users')
       .select('*');
 
     if (usersError) throw usersError;
 
-    // Ukupno dolazaka
     const { data: attendance, error: attendanceError } = await supabase
       .from('dolasci')
       .select('*');
 
     if (attendanceError) throw attendanceError;
 
-    // Zahtevi na čekanju
     const { data: pendingRequests, error: requestsError } = await supabase
       .from('slobodni_dani')
       .select('*')
@@ -721,11 +717,19 @@ app.put('/update-user/:id', async (req, res) => {
   }
 });
 
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV 
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🔐 QR kodovi će se generisati automatski kada zatreba`);
+  console.log(`✅ CORS enabled for Vercel frontend`);
   
-  // Generiši početni QR kod ako ne postoji
   setTimeout(async () => {
     try {
       const { data } = await supabase
@@ -737,8 +741,6 @@ app.listen(PORT, () => {
       if (!data || data.length === 0) {
         console.log('🔐 Generišem početni QR kod...');
         await generateQRCode();
-      } else {
-        console.log('✅ Postoji aktivan QR kod');
       }
     } catch (error) {
       console.log('Note:', error.message);

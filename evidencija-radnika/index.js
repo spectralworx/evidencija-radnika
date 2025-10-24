@@ -271,6 +271,18 @@ app.post('/create-user', async (req, res) => {
   }
 });
 
+// Generiši novi QR kod (ručno) - DODATA RUTA
+app.post('/generate-qr', async (req, res) => {
+  try {
+    console.log('🔄 Ručno generisanje QR koda...');
+    const qrCode = await generateQRCode();
+    res.json({ success: true, qrCode });
+  } catch (error) {
+    console.error('❌ Greška pri generisanju QR koda:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Trenutni QR kod - generiše se automatski ako ne postoji
 app.get('/current-qr', async (req, res) => {
   try {

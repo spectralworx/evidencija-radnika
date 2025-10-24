@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import config from '../config';
 
 const Login = ({ setUser }) => {
   const [email, setEmail] = useState('');
@@ -15,7 +16,7 @@ const Login = ({ setUser }) => {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:5000/login', {
+      const response = await axios.post(`${config.API_BASE_URL}/login`, {
         email,
         password
       });

@@ -12,7 +12,7 @@ app.use(cors({
   origin: [
     'http://localhost:5173',
     'http://localhost:3000',
-    'https://evidencija-frontend.vercel.app',  // Zameni sa tvojim tačnim frontend URL-om
+    'https://evidencija-frontend.vercel.app',
     'https://*.vercel.app'
   ],
   credentials: true,

@@ -7,6 +7,7 @@ import UserFormModal from './UserFormModal';
 import VacationManagement from './VacationManagement';
 import AdvancedAttendance from './AdvancedAttendance';
 import axios from 'axios';
+import config from '../config';
 
 // Komponenta za zahteve za slobodne dane
 const VacationRequests = ({ vacationRequests, onVacationRequest, user, t, formatDate, formatDateTime }) => {
@@ -244,7 +245,7 @@ const Dashboard = ({ user, setUser }) => {
 
   const loadAllUsers = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/all-users');
+      const response = await axios.get(`${config.API_BASE_URL}/all-users`);
       if (response.data.success) {
         setAllUsers(response.data.users);
       }
@@ -255,7 +256,7 @@ const Dashboard = ({ user, setUser }) => {
 
   const loadActiveAttendance = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/attendance-history/${user.id}`);
+      const response = await axios.get(`${config.API_BASE_URL}/attendance-history/${user.id}`);
       if (response.data.success && response.data.history.length > 0) {
         const active = response.data.history.find(record => !record.timestamp_odlaska);
         setActiveAttendance(active || null);
@@ -272,9 +273,9 @@ const Dashboard = ({ user, setUser }) => {
 
   const loadAttendanceHistory = async () => {
     try {
-      let url = `http://localhost:5000/attendance-history/${user.id}`;
+      let url = `${config.API_BASE_URL}/attendance-history/${user.id}`;
       if (user.role === 'admin' && activeView === 'all-attendance') {
-        url = 'http://localhost:5000/attendance-history/all';
+        url = `${config.API_BASE_URL}/attendance-history/all`;
       }
       
       const response = await axios.get(url);
@@ -288,9 +289,9 @@ const Dashboard = ({ user, setUser }) => {
 
   const loadVacationRequests = async () => {
     try {
-      let url = `http://localhost:5000/vacation-requests/${user.id}`;
+      let url = `${config.API_BASE_URL}/vacation-requests/${user.id}`;
       if (user.role === 'admin' && activeView === 'vacation-management') {
-        url = 'http://localhost:5000/vacation-requests/all';
+        url = `${config.API_BASE_URL}/vacation-requests/all`;
       }
       
       const response = await axios.get(url);
@@ -308,7 +309,7 @@ const Dashboard = ({ user, setUser }) => {
     setMessageType('info');
 
     try {
-      const validationResponse = await axios.post('http://localhost:5000/validate-qr', {
+      const validationResponse = await axios.post(`${config.API_BASE_URL}/validate-qr`, {
         qrCode: qrCode
       });
 
@@ -324,7 +325,7 @@ const Dashboard = ({ user, setUser }) => {
             setMessage(t('alreadyCheckedIn'));
             setMessageType('warning');
           } else {
-            await axios.post('http://localhost:5000/check-in', { user_id: user.id });
+            await axios.post(`${config.API_BASE_URL}/check-in`, { user_id: user.id });
             setMessage(t('checkInSuccess'));
             setMessageType('success');
             await loadActiveAttendance();
@@ -337,7 +338,7 @@ const Dashboard = ({ user, setUser }) => {
             setMessage(t('noActiveAttendance'));
             setMessageType('warning');
           } else {
-            await axios.post('http://localhost:5000/check-out', { user_id: user.id });
+            await axios.post(`${config.API_BASE_URL}/check-out`, { user_id: user.id });
             setMessage(t('checkOutSuccess'));
             setMessageType('success');
             await loadActiveAttendance();
@@ -350,13 +351,13 @@ const Dashboard = ({ user, setUser }) => {
             setMessage(t('noActiveAttendance'));
             setMessageType('warning');
           } else if (activeBreak) {
-            await axios.post('http://localhost:5000/end-break', { user_id: user.id });
+            await axios.post(`${config.API_BASE_URL}/end-break`, { user_id: user.id });
             setMessage(t('breakEnded'));
             setMessageType('success');
             setActiveBreak(null);
             await loadAttendanceHistory();
           } else {
-            await axios.post('http://localhost:5000/start-break', { user_id: user.id });
+            await axios.post(`${config.API_BASE_URL}/start-break`, { user_id: user.id });
             setMessage(t('breakStarted'));
             setMessageType('success');
             setActiveBreak({ pocetak: new Date().toISOString() });
@@ -387,7 +388,7 @@ const Dashboard = ({ user, setUser }) => {
 
   const handleVacationRequest = async (requestData) => {
     try {
-      await axios.post('http://localhost:5000/vacation-request', {
+      await axios.post(`${config.API_BASE_URL}/vacation-request`, {
         user_id: user.id,
         ...requestData
       });
@@ -403,7 +404,7 @@ const Dashboard = ({ user, setUser }) => {
 
   const handleVacationAction = async (requestId, status, napomena) => {
     try {
-      await axios.put(`http://localhost:5000/vacation-request/${requestId}`, {
+      await axios.put(`${config.API_BASE_URL}/vacation-request/${requestId}`, {
         status: status,
         napomena_admina: napomena || ''
       });
@@ -426,7 +427,6 @@ const Dashboard = ({ user, setUser }) => {
   const handleDeleteUser = async (userId) => {
     if (window.confirm('Da li ste sigurni da želite da obrišete ovog korisnika?')) {
       try {
-        // TODO: Implementiraj brisanje korisnika
         alert(`Brisanje korisnika ID: ${userId} - Funkcionalnost u pripremi`);
       } catch (error) {
         console.error('Greška pri brisanju korisnika:', error);
@@ -437,12 +437,9 @@ const Dashboard = ({ user, setUser }) => {
   const handleSaveUser = async (formData) => {
     try {
       if (editingUser) {
-        // Edit postojećeg korisnika
-        // TODO: Implementiraj edit korisnika
         alert(`Ažuriranje korisnika: ${formData.ime} ${formData.prezime}`);
       } else {
-        // Kreiranje novog korisnika
-        const response = await axios.post('http://localhost:5000/create-user', formData);
+        const response = await axios.post(`${config.API_BASE_URL}/create-user`, formData);
         if (response.data.success) {
           setAllUsers(prev => [...prev, response.data.user]);
           setShowUserModal(false);

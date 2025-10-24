@@ -1,5 +1,6 @@
-// src/components/VacationManagement.jsx
 import React, { useState } from 'react';
+import axios from 'axios';
+import config from '../config';
 
 const VacationManagement = ({ user, vacationRequests, onVacationAction, allUsers = [] }) => {
   const [filters, setFilters] = useState({

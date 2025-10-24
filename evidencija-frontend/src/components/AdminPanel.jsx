@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import config from '../config';
 
 const AdminPanel = ({ user, setUser }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -18,7 +19,6 @@ const AdminPanel = ({ user, setUser }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  // Novi state za filtere
   const [vacationFilters, setVacationFilters] = useState({
     user: 'all',
     status: 'all',
@@ -26,7 +26,6 @@ const AdminPanel = ({ user, setUser }) => {
     dateTo: ''
   });
 
-  // Novi state za modal
   const [vacationActionModal, setVacationActionModal] = useState({
     isOpen: false,
     request: null,
@@ -53,7 +52,7 @@ const AdminPanel = ({ user, setUser }) => {
 
   const loadAllUsers = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/all-users');
+      const response = await axios.get(`${config.API_BASE_URL}/all-users`);
       if (response.data.success) {
         setAllUsers(response.data.users);
       }
@@ -64,7 +63,7 @@ const AdminPanel = ({ user, setUser }) => {
 
   const loadStatistics = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/admin/statistics');
+      const response = await axios.get(`${config.API_BASE_URL}/admin/statistics`);
       if (response.data.success) {
         setStatistics(response.data.statistics);
       }
@@ -76,7 +75,7 @@ const AdminPanel = ({ user, setUser }) => {
   const loadAttendanceHistory = async () => {
     try {
       const params = selectedUser !== 'all' ? { user_id: selectedUser } : {};
-      const response = await axios.get('http://localhost:5000/attendance-history/all', { params });
+      const response = await axios.get(`${config.API_BASE_URL}/attendance-history/all`, { params });
       if (response.data.success) {
         setAttendanceHistory(response.data.history);
       }
@@ -87,7 +86,7 @@ const AdminPanel = ({ user, setUser }) => {
 
   const loadVacationRequests = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/vacation-requests/all');
+      const response = await axios.get(`${config.API_BASE_URL}/vacation-requests/all`);
       if (response.data.success) {
         setVacationRequests(response.data.requests);
       }
@@ -96,12 +95,10 @@ const AdminPanel = ({ user, setUser }) => {
     }
   };
 
-  // Filtriranje zahteva
   const filteredVacationRequests = vacationRequests.filter(request => {
     const userMatch = vacationFilters.user === 'all' || request.user_id === vacationFilters.user;
     const statusMatch = vacationFilters.status === 'all' || request.status === vacationFilters.status;
     
-    // Filtriranje po datumu
     let dateMatch = true;
     if (vacationFilters.dateFrom) {
       const startDate = new Date(request.pocetak);
@@ -117,7 +114,6 @@ const AdminPanel = ({ user, setUser }) => {
     return userMatch && statusMatch && dateMatch;
   });
 
-  // Nova funkcija za akcije
   const handleVacationAction = (requestId, action) => {
     const request = vacationRequests.find(r => r.id === requestId);
     setVacationActionModal({
@@ -134,7 +130,7 @@ const AdminPanel = ({ user, setUser }) => {
     if (!request) return;
 
     try {
-      await axios.put(`http://localhost:5000/vacation-request/${request.id}`, {
+      await axios.put(`${config.API_BASE_URL}/vacation-request/${request.id}`, {
         status: action,
         napomena_admina: reason || ''
       });
@@ -148,14 +144,8 @@ const AdminPanel = ({ user, setUser }) => {
         action: null,
         reason: ''
       });
-      
-      setMessage(`Zahtev ${action === 'odobreno' ? 'odobren' : 'odbijen'}!`);
-      setMessageType('success');
-      setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       console.error('Greška pri ažuriranju zahteva:', error);
-      setMessage('Greška pri ažuriranju zahteva');
-      setMessageType('error');
     }
   };
 
@@ -234,7 +224,6 @@ const AdminPanel = ({ user, setUser }) => {
         </div>
       </div>
 
-      {/* Recent Activity */}
       <div className="recent-section">
         <h3>📈 Nedavna Aktivnost</h3>
         <div className="recent-grid">
@@ -362,7 +351,6 @@ const AdminPanel = ({ user, setUser }) => {
         </div>
       </div>
 
-      {/* Poboljšani filteri */}
       <div className="filters-container">
         <div className="filters-grid">
           <div className="form-group">
@@ -434,7 +422,6 @@ const AdminPanel = ({ user, setUser }) => {
         </div>
       </div>
 
-      {/* Lista zahteva sa boljim dizajnom */}
       <div className="vacation-requests-grid">
         {filteredVacationRequests.length === 0 ? (
           <div className="no-data">
@@ -504,7 +491,6 @@ const AdminPanel = ({ user, setUser }) => {
         )}
       </div>
 
-      {/* Modal za akcije */}
       {vacationActionModal.isOpen && (
         <div className="modal-overlay">
           <div className="modal action-modal">
@@ -588,7 +574,6 @@ const AdminPanel = ({ user, setUser }) => {
 
   return (
     <div className="admin-panel">
-      {/* Header */}
       <header className="admin-header">
         <div className="admin-header-left">
           <button className="btn btn-secondary" onClick={() => navigate('/')}>
@@ -608,7 +593,6 @@ const AdminPanel = ({ user, setUser }) => {
         </div>
       </header>
 
-      {/* Navigation */}
       <nav className="admin-nav">
         <button 
           className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
@@ -630,7 +614,6 @@ const AdminPanel = ({ user, setUser }) => {
         </button>
       </nav>
 
-      {/* Main Content */}
       <main className="admin-main">
         {activeTab === 'dashboard' && renderDashboard()}
         {activeTab === 'attendance' && renderAttendance()}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import config from '../config';
 
 const AdvancedAttendance = ({ user, formatDate, formatDateTime }) => {
   const [attendanceData, setAttendanceData] = useState([]);
@@ -39,7 +40,7 @@ const AdvancedAttendance = ({ user, formatDate, formatDateTime }) => {
 
   const loadAllUsers = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/all-users');
+      const response = await axios.get(`${config.API_BASE_URL}/all-users`);
       if (response.data.success) {
         setAllUsers(response.data.users);
       }
@@ -51,7 +52,7 @@ const AdvancedAttendance = ({ user, formatDate, formatDateTime }) => {
   const loadAttendanceData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/attendance-history/all');
+      const response = await axios.get(`${config.API_BASE_URL}/attendance-history/all`);
       if (response.data.success) {
         setAttendanceData(response.data.history);
         setPagination(prev => ({ ...prev, total: response.data.history.length }));

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import config from '../config';
 
 const QrCodePage = () => {
   const [currentQrCode, setCurrentQrCode] = useState(null);
@@ -14,11 +15,10 @@ const QrCodePage = () => {
   const loadCurrentQrCode = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/current-qr');
+      const response = await axios.get(`${config.API_BASE_URL}/current-qr`);
       if (response.data.success) {
         setCurrentQrCode(response.data.qrCode);
         
-        // DEBUG informacije
         console.log('🔍 QR Code Debug:');
         console.log('Vazeci do (raw):', response.data.qrCode.vazeci_do);
         console.log('Vazeci do (Srbija):', formatDateTime(response.data.qrCode.vazeci_do));
@@ -30,12 +30,10 @@ const QrCodePage = () => {
     }
   };
 
-  // ISPRAVNA funkcija za formatiranje datuma
   const formatDateTime = (dateString) => {
     try {
       const date = new Date(dateString);
       
-      // Koristi Europe/Belgrade timezone (Srbija)
       return date.toLocaleString('sr-RS', {
         timeZone: 'Europe/Belgrade',
         day: '2-digit',
@@ -89,8 +87,6 @@ const QrCodePage = () => {
                 <span className="info-label">Automatska promena:</span>
                 <span className="info-value">Nasumično</span>
               </div>
-              
-              
             </div>
           </div>
         ) : (

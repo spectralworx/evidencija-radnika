@@ -6,14 +6,20 @@ const cron = require('node-cron');
 require('dotenv').config();
 
 const app = express();
+
+// CORS konfiguracija - OVO JE KLJUČNO!
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://tvoj-frontend.vercel.app', // Zamenićeš kasnije
-    'https://tvoj-app.vercel.app'       // Zamenićeš kasnije
+    'http://localhost:3000',
+    'https://evidencija-frontend.vercel.app',  // Zameni sa tvojim tačnim frontend URL-om
+    'https://*.vercel.app'
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
+
 app.use(express.json());
 
 const supabase = createClient(
@@ -80,12 +86,12 @@ const generateQRCode = async () => {
 
 // Test rute
 app.get('/', (req, res) => {
-  res.json({ message: 'Backend radi! 🚀' });
+  res.json({ message: 'Backend radi! 🚀', timestamp: new Date().toISOString() });
 });
 
 app.get('/test-db', async (req, res) => {
   try {
-    const { data, error } = await supabase.from('users').select('*');
+    const { data, error } = await supabase.from('users').select('*').limit(5);
     if (error) throw error;
     res.json({ message: 'Baza radi!', data });
   } catch (error) {
@@ -163,6 +169,8 @@ app.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     
+    console.log('🔐 Login pokušaj za:', email);
+    
     const { data: user, error } = await supabase
       .from('users')
       .select('*')
@@ -170,10 +178,12 @@ app.post('/login', async (req, res) => {
       .single();
 
     if (error || !user) {
+      console.log('❌ Korisnik nije pronađen:', email);
       return res.status(401).json({ success: false, error: 'Korisnik nije pronađen' });
     }
 
     if (password && password.length >= 3) {
+      console.log('✅ Uspešan login za:', email);
       res.json({
         success: true,
         user: {
@@ -187,9 +197,11 @@ app.post('/login', async (req, res) => {
         }
       });
     } else {
+      console.log('❌ Pogrešna lozinka za:', email);
       res.status(401).json({ success: false, error: 'Pogrešna lozinka' });
     }
   } catch (error) {
+    console.error('❌ Greška pri login:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

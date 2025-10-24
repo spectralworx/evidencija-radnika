@@ -21,30 +21,46 @@ const UserFormModal = ({
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Reset form when modal opens/closes or editingUser changes
   useEffect(() => {
-    if (editingUser) {
-      setFormData({
-        ime: editingUser.ime || '',
-        prezime: editingUser.prezime || '',
-        email: editingUser.email || '',
-        telefon: editingUser.telefon || '',
-        mesto_rada: editingUser.mesto_rada || '',
-        role: editingUser.role || 'radnik',
-        password: '' // Ostavimo prazno za edit
-      });
-    } else {
-      setFormData({
-        ime: '',
-        prezime: '',
-        email: '',
-        telefon: '',
-        mesto_rada: '',
-        role: 'radnik',
-        password: ''
-      });
+    if (isOpen) {
+      if (editingUser) {
+        setFormData({
+          ime: editingUser.ime || '',
+          prezime: editingUser.prezime || '',
+          email: editingUser.email || '',
+          telefon: editingUser.telefon || '',
+          mesto_rada: editingUser.mesto_rada || '',
+          role: editingUser.role || 'radnik',
+          password: ''
+        });
+      } else {
+        setFormData({
+          ime: '',
+          prezime: '',
+          email: '',
+          telefon: '',
+          mesto_rada: '',
+          role: 'radnik',
+          password: ''
+        });
+      }
+      setErrors({});
     }
-    setErrors({});
   }, [editingUser, isOpen]);
+
+  // Prevent background scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   const validateForm = () => {
     const newErrors = {};

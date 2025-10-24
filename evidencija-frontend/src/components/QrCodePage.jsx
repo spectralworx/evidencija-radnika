@@ -6,6 +6,7 @@ import config from '../config';
 const QrCodePage = () => {
   const [currentQrCode, setCurrentQrCode] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -18,10 +19,6 @@ const QrCodePage = () => {
       const response = await axios.get(`${config.API_BASE_URL}/current-qr`);
       if (response.data.success) {
         setCurrentQrCode(response.data.qrCode);
-        
-        console.log('🔍 QR Code Debug:');
-        console.log('Vazeci do (raw):', response.data.qrCode.vazeci_do);
-        console.log('Vazeci do (Srbija):', formatDateTime(response.data.qrCode.vazeci_do));
       }
     } catch (error) {
       console.error('Greška pri učitavanju QR koda:', error);
@@ -30,10 +27,24 @@ const QrCodePage = () => {
     }
   };
 
+  const generateNewQrCode = async () => {
+    try {
+      setGenerating(true);
+      const response = await axios.post(`${config.API_BASE_URL}/generate-qr`);
+      if (response.data.success) {
+        setCurrentQrCode(response.data.qrCode);
+      }
+    } catch (error) {
+      console.error('Greška pri generisanju QR koda:', error);
+      alert('Greška pri generisanju QR koda: ' + error.message);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const formatDateTime = (dateString) => {
     try {
       const date = new Date(dateString);
-      
       return date.toLocaleString('sr-RS', {
         timeZone: 'Europe/Belgrade',
         day: '2-digit',
@@ -44,7 +55,6 @@ const QrCodePage = () => {
         hour12: false
       });
     } catch (error) {
-      console.error('Greška pri formatiranju datuma:', error);
       return dateString;
     }
   };
@@ -67,25 +77,76 @@ const QrCodePage = () => {
         </header>
 
         {currentQrCode ? (
-          <div className="qr-content-simple">
-            <div className="qr-display-simple">
-              <div className="qr-image-container-large">
+          <div className="qr-content">
+            <div className="qr-display">
+              <div className="qr-image-container">
                 <img 
                   src={currentQrCode.qr_image} 
                   alt="QR Code" 
-                  className="qr-image-large" 
+                  className="qr-image" 
                 />
+              </div>
+              
+              <div className="qr-actions">
+                <button 
+                  className="btn btn-primary"
+                  onClick={generateNewQrCode}
+                  disabled={generating}
+                >
+                  {generating ? '⏳ Generišem...' : '🔄 Generiši Novi QR Kod'}
+                </button>
+                <button 
+                  className="btn btn-secondary"
+                  onClick={loadCurrentQrCode}
+                >
+                  🔄 Osveži
+                </button>
               </div>
             </div>
             
-            <div className="qr-info-simple">
-              <div className="info-item-simple">
-                <span className="info-label">QR Kod:</span>
-                <span className="info-value">Aktivan</span>
+            <div className="qr-info">
+              <div className="info-section">
+                <h3>📋 Informacije o QR Kodu</h3>
+                <div className="info-grid">
+                  <div className="info-item">
+                    <span className="info-label">Status:</span>
+                    <span className="info-value status-active">Aktivan</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Generisan:</span>
+                    <span className="info-value">{formatDateTime(currentQrCode.vreme_generisanja)}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Važi do:</span>
+                    <span className="info-value">{formatDateTime(currentQrCode.vazeci_do)}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Kod:</span>
+                    <span className="info-value code">{currentQrCode.kod}</span>
+                  </div>
+                </div>
               </div>
-              <div className="info-item-simple">
-                <span className="info-label">Automatska promena:</span>
-                <span className="info-value">Nasumično</span>
+
+              <div className="instructions-section">
+                <h3>📱 Kako koristiti</h3>
+                <div className="instructions-list">
+                  <div className="instruction-item">
+                    <span className="step-number">1</span>
+                    <span className="step-text">Otvori aplikaciju na telefonu</span>
+                  </div>
+                  <div className="instruction-item">
+                    <span className="step-number">2</span>
+                    <span className="step-text">Idi na sekciju za skeniranje</span>
+                  </div>
+                  <div className="instruction-item">
+                    <span className="step-number">3</span>
+                    <span className="step-text">Skeniraj QR kod kamerom</span>
+                  </div>
+                  <div className="instruction-item">
+                    <span className="step-number">4</span>
+                    <span className="step-text">Potvrdi akciju (dolazak/odlazak/pauza)</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -93,6 +154,14 @@ const QrCodePage = () => {
           <div className="no-qr">
             <div className="no-qr-icon">⏳</div>
             <h3>Čekanje na QR kod</h3>
+            <p>QR kod će se uskoro generisati automatski</p>
+            <button 
+              className="btn btn-primary"
+              onClick={generateNewQrCode}
+              disabled={generating}
+            >
+              {generating ? '⏳ Generišem...' : '🚀 Generiši QR Kod Odmah'}
+            </button>
           </div>
         )}
       </div>

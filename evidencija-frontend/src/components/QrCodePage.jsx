@@ -62,7 +62,7 @@ const QrCodePage = () => {
   if (loading) {
     return (
       <div className="qr-code-page loading">
-        <div className="loading-spinner">⏳</div>
+        <div className="loading-spinner-large">⏳</div>
         <p>Učitavam QR kod...</p>
       </div>
     );

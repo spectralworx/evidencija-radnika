@@ -5,7 +5,6 @@ import QRScanner from './QRScanner';
 import Sidebar from './Sidebar';
 import UserFormModal from './UserFormModal';
 import VacationManagement from './VacationManagement';
-import AdvancedAttendance from './AdvancedAttendance';
 import AttendanceView from './AttendanceView';
 import axios from 'axios';
 import config from '../config';
@@ -592,43 +591,15 @@ const Dashboard = ({ user, setUser }) => {
   );
 
   // Render istorije dolazaka
-  const renderHistoryView = () => (
-    <div className="data-section">
-      <div className="section-header">
-        <h3 className="section-title">📊 {t('attendanceHistory')}</h3>
-      </div>
-      <div className="data-list">
-        {attendanceHistory.length === 0 ? (
-          <div className="text-center p-6">
-            <p className="text-muted">{t('noHistory')}</p>
-          </div>
-        ) : (
-          attendanceHistory.map((record, index) => (
-            <div key={index} className="data-item">
-              <div className="data-header">
-                <div>
-                  <h4 className="mb-2">{formatDate(new Date(record.timestamp_dolaska))}</h4>
-                  <div className="data-meta">
-                    <span className="meta-item">
-                      ⬇️ {t('arrival')}: {formatDateTime(record.timestamp_dolaska)}
-                    </span>
-                    {record.timestamp_odlaska && (
-                      <span className="meta-item">
-                        ⬆️ {t('departure')}: {formatDateTime(record.timestamp_odlaska)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <span className={`status-badge ${record.timestamp_odlaska ? 'status-completed' : 'status-active'}`}>
-                  {record.timestamp_odlaska ? t('completed') : t('active')}
-                </span>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
+  const renderHistoryView = () => {
+    return (
+      <AttendanceView 
+        user={user}
+        formatDate={formatDate}
+        formatDateTime={formatDateTime}
+      />
+    );
+  };
 
   // Render zahteva za slobodne dane
   const renderVacationView = () => (

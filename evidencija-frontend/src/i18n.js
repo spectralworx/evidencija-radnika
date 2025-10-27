@@ -161,6 +161,17 @@ const resources = {
       "employee": "Zaposleni",
       "administrator": "Administrator",
 
+      // NEW: Attendance View Translations
+      "boxView": "Box Prikaz",
+      "listView": "Lista Prikaz",
+      "allTypes": "Svi Tipovi",
+      "arrivals": "Dolasci",
+      "departures": "Odlasci", 
+      "breaks": "Pauze",
+      "totalHours": "Ukupno sati",
+      "totalBreaks": "Ukupno pauza",
+      "totalRecords": "Ukupno zapisa",
+
       // Misc
       "online": "Online",
       "sessionActive": "Sesija aktivna",
@@ -325,6 +336,17 @@ const resources = {
       "role": "Role", 
       "employee": "Employee",
       "administrator": "Administrator",
+
+      // NEW: Attendance View Translations
+      "boxView": "Box View",
+      "listView": "List View",
+      "allTypes": "All Types",
+      "arrivals": "Arrivals",
+      "departures": "Departures",
+      "breaks": "Breaks",
+      "totalHours": "Total Hours",
+      "totalBreaks": "Total Breaks",
+      "totalRecords": "Total Records",
 
       // Misc
       "online": "Online",
